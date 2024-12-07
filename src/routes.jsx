@@ -1,13 +1,13 @@
 import { useRoutes } from 'react-router-dom';
 
 // local imports
-import { Home } from './pages';
+import { Home, Vendor } from './pages';
 
 const Router = () => {
     return useRoutes([
         {
             path: '*',
-            element: <Home />
+            element: <Vendor />
         }
     ]);
 };
