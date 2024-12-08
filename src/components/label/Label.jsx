@@ -22,12 +22,12 @@ const Label = ({ children, forId, className, variant }) => {
             case 'warning':
                 return 'text-yellow-600 text-sm';
             default:
-                return 'text-base';
+                return '';
         }
     };
 
     return (
-        <label htmlFor={forId} className={`${className} ${getVariant()}`}>
+        <label htmlFor={forId} className={`${getVariant()} ${className}`}>
             {children}
         </label>
     );
