@@ -1,10 +1,11 @@
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 
 // local imports
-import { useEffect, useState } from 'react';
 import { Dropdown, Label, PrimaryButton, Section, TextBox } from '../../components';
+import useFetch from '../../hooks/useFetch';
 
 const schema = yup.object({
     ticketRetrievalRate: yup
@@ -33,28 +34,78 @@ const Customer = ({ isOn }) => {
     const [customers, setCustomers] = useState([]);
     const [selectedCustomer, setSelectedCustomer] = useState('Select Customer');
     const [newCustomer, setNewCustomer] = useState('');
-    const [isCustomerNameError, setIsCustomerNameError] = useState(false);
+    const [nameErrorMsg, setNameErrorMsg] = useState('');
 
+    const { fetchData } = useFetch();
+
+    const getCustomers = async () => {
+        const response = await fetchData(`http://localhost:8080/api/customers/all`);
+        if (response && response?.length > 0) {
+            setCustomers(response);
+        }
+    };
+    
     useEffect(() => {
-        setCustomers(['Customer 1', 'Customer 2', 'Customer 3']);
+        getCustomers();
     }, []);
 
     useEffect(() => {
         if (newCustomer) {
-            setIsCustomerNameError(false);
+            setNameErrorMsg('');
         }
     }, [newCustomer]);
 
     const handleAddCustomer = () => {
         if (!newCustomer) {
-            setIsCustomerNameError(true);
+            setNameErrorMsg('Customer name is required');
             return;
         }
-        alert('Customer added: ' + newCustomer);
+        const save = async () => {
+            const response = await fetch('http://localhost:8080/api/customers/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: newCustomer
+                })
+            });
+
+            if (!response.ok) {
+                response.json().then((data) => {
+                    setNameErrorMsg((data?.message ?? 'Failed to save Customer') + ': ' + response.status);
+                });
+            } else {
+                getCustomers();
+                alert('Customer saved: ' + newCustomer);
+            }
+        };
+        save();
     };
 
     const handleSaveConfigurations = (data) => {
-        alert('Configurations saved: ' + JSON.stringify(data));
+        const save = async () => {
+            const response = await fetch(`http://localhost:8080/api/customers/edit/${selectedCustomer.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "customerRetrievalRate": data.ticketRetrievalRate,
+                    "maxTicketCapacity": data.maxTicketCapacity
+                })
+            });
+
+            if (!response.ok) {
+                response.json().then((data) => {
+                    setNameErrorMsg((data?.message ?? 'Failed to update Customer') + ': ' + response.status);
+                });
+            } else {
+                getCustomers();
+                alert('Customer details configured..!');
+            }
+        };
+        save();
     };
 
     return (
@@ -64,8 +115,8 @@ const Customer = ({ isOn }) => {
                     <Label>Customer Name:</Label>
                     <TextBox value={newCustomer} onChange={(e) => setNewCustomer(e.target.value)} />
                     <PrimaryButton text="Add Customer" onClick={handleAddCustomer} disabled={!isOn} />
-                    {isCustomerNameError && (
-                        <Label variant="error">Customer name is required</Label>
+                    {nameErrorMsg && (
+                        <Label variant="error">{nameErrorMsg}</Label>
                     )}
                 </div>
             </Section>

@@ -5,6 +5,7 @@ import * as yup from 'yup';
 // local imports
 import { useEffect, useState } from 'react';
 import { Dropdown, Label, PrimaryButton, Section, TextBox } from '../../components';
+import useFetch from '../../hooks/useFetch';
 
 const schema = yup.object({
     ticketReleaseRate: yup
@@ -33,28 +34,78 @@ const Vendor = ({ isOn }) => {
     const [vendors, setVendors] = useState([]);
     const [selectedVendor, setSelectedVendor] = useState('Select Vendor');
     const [newVendor, setNewVendor] = useState('');
-    const [isVendorNameError, setIsVendorNameError] = useState(false);
+    const [nameErrorMsg, setNameErrorMsg] = useState('');
+
+    const { fetchData } = useFetch();
+
+    const getVendors = async () => {
+        const response = await fetchData(`http://localhost:8080/api/vendors/all`);
+        if (response && response?.length > 0) {
+            setVendors(response);
+        }
+    };
 
     useEffect(() => {
-        setVendors(['Vendor 1', 'Vendor 2', 'Vendor 3']);
+        getVendors();
     }, []);
 
     useEffect(() => {
         if (newVendor) {
-            setIsVendorNameError(false);
+            setNameErrorMsg('');
         }
     }, [newVendor]);
 
     const handleAddVendor = () => {
         if (!newVendor) {
-            setIsVendorNameError(true);
+            setNameErrorMsg(true);
             return;
         }
-        alert('Vendor added: ' + newVendor);
+        const save = async () => {
+            const response = await fetch('http://localhost:8080/api/vendors/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: newVendor
+                })
+            });
+
+            if (!response.ok) {
+                response.json().then((data) => {
+                    setNameErrorMsg((data?.message ?? 'Failed to save Vendor') + ': ' + response.status);
+                });
+            } else {
+                getVendors();
+                alert('Vendor saved: ' + newVendor);
+            }
+        };
+        save();
     };
 
     const handleSaveConfigurations = (data) => {
-        alert('Configurations saved: ' + JSON.stringify(data));
+        const save = async () => {
+            const response = await fetch(`http://localhost:8080/api/vendors/edit/${selectedVendor.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "ticketReleaseRate": data.ticketReleaseRate,
+                    "maxTicketCapacity": data.maxTicketCapacity
+                })
+            });
+
+            if (!response.ok) {
+                response.json().then((data) => {
+                    setNameErrorMsg((data?.message ?? 'Failed to update Vendor') + ': ' + response.status);
+                });
+            } else {
+                getVendors();
+                alert('Vendor details configured..!');
+            }
+        };
+        save();
     };
 
     return (
@@ -64,7 +115,7 @@ const Vendor = ({ isOn }) => {
                     <Label>Vendor Name:</Label>
                     <TextBox value={newVendor} onChange={(e) => setNewVendor(e.target.value)} />
                     <PrimaryButton text="Add Vendor" onClick={handleAddVendor} disabled={!isOn} />
-                    {isVendorNameError && <Label variant="error">Vendor name is required</Label>}
+                    {nameErrorMsg && <Label variant="error">Vendor name is required</Label>}
                 </div>
             </Section>
 

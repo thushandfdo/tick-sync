@@ -25,7 +25,7 @@ const Dropdown = ({ items, selectedItem, setSelectedItem, name }) => {
                 className="text-white bg-primary-blue hover:bg-blue-800 focus:outline-none min-w-32 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center justify-between"
                 onClick={() => setIsClicked(!isClicked)}
             >
-                {selectedItem}
+                {selectedItem?.name || selectedItem}
                 <div className={`${isClicked ? 'rotate-180' : ''} ms-3`}>
                     <svg
                         className="w-2.5 h-2.5"
@@ -56,9 +56,9 @@ const Dropdown = ({ items, selectedItem, setSelectedItem, name }) => {
                                     setSelectedItem(item);
                                     setIsClicked(false);
                                 }}
-                                className={`block px-4 py-2 hover:bg-gray-200 hover:font-semibold cursor-pointer ${item === selectedItem ? 'bg-gray-200 font-semibold' : ''}`}
+                                className={`block px-4 py-2 hover:bg-gray-200 hover:font-semibold cursor-pointer ${(item?.name || item) === selectedItem ? 'bg-gray-200 font-semibold' : ''}`}
                             >
-                                {item}
+                                {item?.name || item}
                             </li>
                         ))}
                 </ul>
